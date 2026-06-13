@@ -121,3 +121,75 @@ class WeatherService :
 
         except requests.exceptions.RequestException:
             return []
+        
+class ActivityService:
+    def __init__(self):
+        self.api_key = os.getenv("PLACESAPI_KEY")
+        self.base_url = "https://api.geoapify.com/v2/places"
+
+    def get_activities(self, lat, lon, environment_type = "Outdoor"):
+        
+        # Choix dynamique des catégories Geoapify selon la suggestion de la classe Weather
+        if environment_type == "Indoor":
+            categories = "entertainment.culture,entertainment.cinema,leisure.spa"
+        else: 
+            categories = "leisure.park,entertainment.theme_park,leisure.nature_reserve"
+        
+        params = {
+            "categories" : categories,
+            "filter" : f"circle:{lon},{lat},5000", # recherche dans un rayon de 5km
+            "bias" : f"proximity:{lon},{lat}", # on priorise les lieux les plus proches
+            "limit" : 10, # on limite à 10 résultats
+            "apiKey": self.api_key,
+            "lang": "fr"
+        }
+
+        try:
+            response = requests.get(self.base_url, params= params)
+            if response.status_code != 200:
+                print(f"Erreur Geapify : {response.status_code}")
+                return []
+            
+            data = response.json()
+            if not data or "features" not in data:
+                return []
+            
+            activity_objects = []
+
+            for activity in data.get("features", []):
+                properties = activity.get("properties", {})
+                geometry = activity.get("geometry", {})
+                website= properties.get("website")
+                opening_hours= properties.get("opening_hours")
+                raw_data = properties.get("datasource", {}).get("raw", {})
+                phone = raw_data.get("phone")
+                image = raw_data.get("image")
+
+                coords_brutes = geometry.get("coordinates", [0,0])
+
+                # Sécurité pour ignorer l'activité si elle n'a pas de nom
+                name = properties.get("name")
+                if not name:
+                    continue
+
+                objet_activite = Activity(
+                    name = name,
+                    state=properties.get("state"),
+                    county= properties.get("county"),
+                    address= properties.get("formatted"),
+                    # Inversion de l'ordre pour respecter le tuple lat lon
+                    coordinates= (coords_brutes[1], coords_brutes[0]),
+                    phone= phone,
+                    website= website,
+                    image= image,
+                    category= properties.get("categories", ["Activity"])[0],
+                    opening_hours= opening_hours,
+                    facilities= properties.get("facilities")
+                )
+
+                activity_objects.append(objet_activite)
+
+            return activity_objects
+        
+        except requests.exceptions.RequestException:
+            return []

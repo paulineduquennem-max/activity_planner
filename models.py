@@ -38,7 +38,7 @@ class Weather :
         return "Outdoor"
     
 class Activity : 
-    def __init__(self, name, state, county, address, coordinates, phone, website, category, opening_hours):
+    def __init__(self, name, state, county, address, coordinates, phone, website, image,category, opening_hours, facilities):
         self.name = name
         self.state = state
         self.county = county
@@ -46,8 +46,10 @@ class Activity :
         self.coordinates = coordinates # Tuple de coordonnées latitude, longitude
         self.phone = phone
         self.website = website
+        self.image = image
         self.category = category
         self.opening_hours = opening_hours
+        self.facilities = facilities
     
     def to_geojson(self):
         pass
