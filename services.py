@@ -4,6 +4,7 @@ import requests
 from dotenv import load_dotenv
 from pathlib import Path
 from models import Weather, Activity
+import streamlit as st
 
 # On récupère le chemin absolu du dossier où se trouve le script actuel
 base_dir = Path(__file__).resolve().parent
@@ -127,6 +128,7 @@ class ActivityService:
         self.api_key = os.getenv("PLACESAPI_KEY")
         self.base_url = "https://api.geoapify.com/v2/places"
 
+    @st.cache_data(ttl=86400) # Ajout d'un cache qui s'efface toutes les 24 heures
     def get_activities(self, lat, lon, environment_type = "Outdoor"):
         
         # Choix dynamique des catégories Geoapify selon la suggestion de la classe Weather
