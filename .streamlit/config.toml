@@ -1,0 +1,3 @@
+[client]
+# Permet de masquer le nom du fichier ou de le configurer
+showSidebarNavigation = false

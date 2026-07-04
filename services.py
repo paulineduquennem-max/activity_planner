@@ -96,10 +96,11 @@ class WeatherService :
                 date_seule = date_complete.split(" ")[0] 
                 heure_seule = date_complete.split(" ")[1]
 
-            # Création de l'objet en lui passant les valeurs extraites du json
+             # Création de l'objet en lui passant les valeurs extraites du json
                 objet_meteo = Weather(
-                    date=forecast.get("dt_txt").split(" ")[0],  # Découpe "2026-06-11 12:00:00" pour garder la date
-                    time=forecast.get("dt"),                    # Le timestamp
+                    date=date_seule,
+                    time=forecast.get("dt"),
+                    heure_affichage=heure_seule,
                     part_of_day=forecast.get("sys", {}).get("pod"),
                     temperature=main_data.get("temp"),
                     temp_ressenti=main_data.get("feels_like"),
@@ -107,12 +108,12 @@ class WeatherService :
                     max_temp=main_data.get("temp_max"),
                     weather=weather_details.get("main"),
                     weather_description=weather_details.get("description"),
-                    cloudiness=forecast.get("clouds", {}).get("all"),
-                    wind_speed=forecast.get("wind", {}).get("speed"),
+                    cloudiness=forecast.get("clouds", {}).get("all", 0),  # Valeur par défaut si absent
+                    wind_speed=forecast.get("wind", {}).get("speed", 0),  # Valeur par défaut si absent
                     prob_of_precipitation=forecast.get("pop", 0),
                     city=city_name,
-                    city_sunrise=sunrise,
-                    city_sunset=sunset
+                    city_sunset=sunset,
+                    city_sunrise=sunrise
                 )
 
             # On ajoute l'objet à la liste

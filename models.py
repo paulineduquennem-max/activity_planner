@@ -11,6 +11,7 @@ class Weather :
         self.date = date
         self.time = time
         self.heure_affichage = heure_affichage
+        self.part_of_day = part_of_day
         self.temperature = temperature
         self.temp_ressenti = temp_ressenti
         self.min_temp = min_temp
@@ -23,7 +24,6 @@ class Weather :
         self.city = city
         self.city_sunset = city_sunset
         self.city_sunrise = city_sunrise
-        self.part_of_day = part_of_day
 
     # Méthode pour déterminer s'il fait nuit et proposer les activités en conséquence 
     def is_nighttime(self):
