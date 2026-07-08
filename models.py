@@ -33,7 +33,19 @@ class Weather :
     
     # Méthode pour suggérer des activités intérieur ou extérieur en fonction de la météo
     def suggest_environment(self):
-        if self.weather in ["Rain", "Snow", "Thunderstorm"]:
+        # 🛠️ Sécurisation : On force la température à devenir un nombre décimal
+        try:
+            temp_numerique = float(self.temperature)
+        except (TypeError, ValueError):
+            temp_numerique = 20.0 # Valeur de secours par défaut si bug
+            
+        # Petit espionnage dans le terminal Git Bash pour vérifier
+        print(f"--- DEBUG URBANPULSE : Ville={self.city} | Temp={temp_numerique} | Type={type(temp_numerique)} ---")
+
+        mauvais_temps = self.weather in ["Rain", "Snow", "Thunderstorm"]
+        temperature_extreme = self.temperature >= 30.0 or self.temperature < 15.0
+
+        if mauvais_temps or temperature_extreme:
             return "Indoor"
         return "Outdoor"
     

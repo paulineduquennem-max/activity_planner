@@ -1,3 +1,12 @@
 [client]
 # Permet de masquer le nom du fichier ou de le configurer
 showSidebarNavigation = false
+
+[theme]
+primaryColor = "#00B4D8"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#0A192F"
+
+textColor = "#0A192F"
+
+font = "sans serif"

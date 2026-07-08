@@ -60,6 +60,64 @@ if ville_recherche :
                 # On récupère la prévision immédiate (le premier objet Weather de la liste)
                 meteo_actuelle = forecasts[0]
 
+                # --- 🎨 CONFIGURATION DU FOND DYNAMIQUE (AJOUTÉ ICI) ---
+                styles_meteo = {
+                    "Clear": "linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%)",       # Orangé/Jaune très doux
+                    "Clouds": "linear-gradient(135deg, #ECEFF1 0%, #CFD8DC 100%)",      # Gris clair texturé
+                    "Rain": "linear-gradient(135deg, #E1F5FE 0%, #B0BEC5 100%)",        # Gris-bleu de pluie
+                    "Thunderstorm": "linear-gradient(135deg, #37474F 0%, #263238 100%)",# Bleu/Gris très foncé
+                    "Snow": "linear-gradient(135deg, #F5F5F5 0%, #E0F7FA 100%)"         # Bleu pâle givré
+                }
+
+                fond_choisi = styles_meteo.get(meteo_actuelle.weather, "linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)")
+                
+                # Injection CSS pour appliquer le design sur-mesure
+                st.markdown(f"""
+                    <style>
+                    /* Fond dynamique de l'application */
+                    .stApp {{
+                        background: {fond_choisi};
+                        transition: background 0.5s ease;
+                    }}
+                    
+                    /* Titres et textes de la page principale forcés en bleu marine */
+                    .stMain h1, .stMain h2, .stMain h3, .stMain p, .stMain .stMarkdown {{
+                        color: #0A192F !important;
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    }}
+                    
+                    /* Amélioration de la taille de la typo pour la lecture */
+                    .stMain p, .stMain .stMarkdown {{
+                        font-size: 1.15rem !important;
+                    }}
+
+                    /* Style appliqué à la barre de recherche */
+                    .stTextInput input {{
+                        background-color: #0A192F !important; /* Fond bleu marine */
+                        color: #F2F2F2 !important;            /* Texte blanc cassé */
+                        font-size: 1.1rem !important;
+                    }}
+                    
+                    /* Couleur du placeholder (texte d'aide quand le champ est vide) */
+                    .stTextInput input::placeholder {{
+                        color: #A0AEC0 !important;
+                    }}
+                    
+                    /* 🛠️ SÉCURISATION DE LA SIDEBAR : On force le texte en blanc/clair */
+                    [data-testid="stSidebar"] h1, 
+                    [data-testid="stSidebar"] p, 
+                    [data-testid="stSidebar"] span,
+                    [data-testid="stSidebar"] a {{
+                        color: #F2F2F2 !important;
+                    }}
+                    
+                    /* On adoucit la couleur du sous-titre de la sidebar */
+                    [data-testid="stSidebar"] caption {{
+                        color: #A0AEC0 !important;
+                    }}
+                    </style>
+                """, unsafe_allow_html=True)
+
                 # Affichage des résultats dans un encadré propre
                 with st.container(border=True):
                     st.write(f"### 📍 {meteo_actuelle.city}")
