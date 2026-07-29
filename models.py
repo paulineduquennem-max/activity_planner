@@ -43,7 +43,7 @@ class Weather :
         print(f"--- DEBUG URBANPULSE : Ville={self.city} | Temp={temp_numerique} | Type={type(temp_numerique)} ---")
 
         mauvais_temps = self.weather in ["Rain", "Snow", "Thunderstorm"]
-        temperature_extreme = self.temperature >= 30.0 or self.temperature < 15.0
+        temperature_extreme = temp_numerique >= 30.0 or self.temperature < 15.0
 
         if mauvais_temps or temperature_extreme:
             return "Indoor"
