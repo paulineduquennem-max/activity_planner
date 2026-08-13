@@ -1,6 +1,7 @@
 import streamlit as st
 import datetime as dt
-from services import GeocodingService, WeatherService
+from services import GeocodingService, WeatherService, ActivityService
+from models import Weather, Activity
 
 # --- MENU LATÉRAL PERSONNALISÉ ---
 st.sidebar.markdown("# 🏙️ UrbanPulse")
@@ -15,6 +16,8 @@ st.sidebar.write("---")
 
 # Appel des services
 geo_service = GeocodingService()
+weather_service = WeatherService()
+activity_service = ActivityService()
 
 # Injection CSS pour le style de la page
 
@@ -93,9 +96,36 @@ with st.container() :
            display_name = geo_info["display_name"]
 
     # Récupération de la prévision météo
-           forecasts = WeatherService.get_forecast(lat,lon)
+           st.write("👉 Tentative d'appel de l'API Météo...")
+           forecasts = weather_service.get_forecast(lat,lon)
 
            if not forecasts:
                st.warning("Les données météo ne sont pas disponible pour le moment")
            else:
-               meteo_actuelle = forecasts[0] 
+               dic_horaire = {
+                                "Matin ⛅": [6, 9], 
+                                "Après-midi ☀️" : [12, 15], 
+                                "Soir 🌙" : [18], 
+                                "Nuit 🌕" : [21, 0, 3]
+                                }
+               heure_cible = dic_horaire[creneau_choisi]
+               date_choisie_str = date_choisie.strftime("%Y-%m-%d") # conversion de l'objet date en str car str dans la classe WeatherService
+
+               meteo_actuelle = None # Sécurité dans le cas ou aucun créneau correspondant
+               for f in forecasts:
+                    heure_int = int(f.heure_affichage.split(":")[0])
+                    if f.date == date_choisie_str and heure_int in heure_cible :
+                        meteo_actuelle = f
+                        break
+
+           if meteo_actuelle:
+                suggestion = meteo_actuelle.suggest_environment()
+                #st.info(f"💡 Indice pour ce créneau : **{suggestion}**") => Vérification du fonctionnement de la récupération des éléments
+           else:
+                st.warning("Aucune prévision exacte trouvée pour ce créneau précis.")
+                suggestion = "Outdoor" #Sécurité donnée une valeur par défaut à suggestion dans le cas météo actuelle ne renvoie rien
+
+    activity_recomended = activity_service.get_activities(lat, lon, suggestion)
+    if not activity_recomended :
+        st.warning("Aucune activité trouvé dans ce rayon pour cette zone.")
+    else: 
