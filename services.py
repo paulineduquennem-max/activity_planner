@@ -129,28 +129,29 @@ class ActivityService:
         self.api_key = os.getenv("PLACESAPI_KEY")
         self.base_url = "https://api.geoapify.com/v2/places"
 
-    @st.cache_data(ttl=86400) # Ajout d'un cache qui s'efface toutes les 24 heures
+    #@st.cache_data(ttl=86400) # Ajout d'un cache qui s'efface toutes les 24 heures
     def get_activities(self, lat, lon, environment_type = "Outdoor"):
         
         # Choix dynamique des catégories Geoapify selon la suggestion de la classe Weather
         if environment_type == "Indoor":
-            categories = "entertainment.culture,entertainment.cinema,leisure.spa"
+            categories = "entertainment.museum,entertainment.cinema,leisure.spa"
         else: 
-            categories = "leisure.park,entertainment.theme_park,leisure.nature_reserve"
+            categories = "leisure.park,entertainment.theme_park,entertainment.zoo"
         
         params = {
             "categories" : categories,
             "filter" : f"circle:{lon},{lat},5000", # recherche dans un rayon de 5km
             "bias" : f"proximity:{lon},{lat}", # on priorise les lieux les plus proches
-            "limit" : 10, # on limite à 10 résultats
+            "limit" : 20, # on limite à 10 résultats
             "apiKey": self.api_key,
             "lang": "fr"
         }
 
         try:
             response = requests.get(self.base_url, params= params)
+            
             if response.status_code != 200:
-                print(f"Erreur Geapify : {response.status_code}")
+                print(f"Erreur Geoapify : {response.status_code}")
                 return []
             
             data = response.json()
@@ -175,6 +176,10 @@ class ActivityService:
                 if not name:
                     continue
 
+                categories_brutes = properties.get("categories", [])
+                # Prend la sous-catégorie détaillée si elle existe, sinon le premier élément
+                cat_choisie = next((c for c in categories_brutes if "." in c), "Activité")
+                
                 objet_activite = Activity(
                     name = name,
                     state=properties.get("state"),
@@ -185,7 +190,7 @@ class ActivityService:
                     phone= phone,
                     website= website,
                     image= image,
-                    category= properties.get("categories", ["Activity"])[0],
+                    category= cat_choisie,
                     opening_hours= opening_hours,
                     facilities= properties.get("facilities")
                 )
