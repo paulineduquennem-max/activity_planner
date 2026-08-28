@@ -65,3 +65,116 @@ class Activity :
     
     def to_geojson(self):
         pass
+
+    def format_opening_hours(self):
+        if not self.opening_hours or not isinstance(self.opening_hours, str):
+            return None
+        
+        texte = self.opening_hours
+        
+        traductions = {
+            # Jours de la semaine
+            "Mo": "Lun", "Tu": "Mar", "We": "Mer", "Th": "Jeu",
+            "Fr": "Ven", "Sa": "Sam", "Su": "Dim",
+            
+            # Mois (norme OSM 3 lettres)
+            "Jan": "janv.", "Feb": "févr.", "Mar": "mars", "Apr": "avr.",
+            "May": "mai", "Jun": "juin", "Jul": "juil.", "Aug": "août",
+            "Sep": "sept.", "Oct": "oct.", "Nov": "nov.", "Dec": "déc.",
+
+            # Mois en anglais complet (au cas où)
+            "January": "janvier", "February": "février", "March": "mars",
+            "April": "avril", "June": "juin", "July": "juillet",
+            "August": "août", "September": "septembre", "October": "octobre",
+            "November": "novembre", "December": "décembre",
+
+            # Statuts et mentions spéciales
+            "off": "Fermé",
+            "closed": "Fermé",
+            "open": "Ouvert",
+            "PH": "Jours fériés",
+            "SH": "Vacances scolaires"
+        }
+        
+        # Remplacement des termes anglais
+        for en, fr in traductions.items():
+            texte = texte.replace(en, fr)
+            
+        # Remplacement du séparateur par des retours à la ligne propres ou des tirets
+        texte = texte.replace(";", "<br>&nbsp;&nbsp;&nbsp;&nbsp;")
+        
+        return f"🕒 <b>Horaires :</b><br>&nbsp;&nbsp;&nbsp;&nbsp;{texte}"
+
+    def to_popup_html(self):
+        elements = []
+        elements.append(f"<strong>{self.name}</strong>")
+        TRADUCTION_CATEGORIES = {# Culture & Spectacle
+                                "entertainment.museum": "🏛️ Musée",
+                                "entertainment.cinema": "🎬 Cinéma",
+                                "entertainment.culture": "🎭 Espace culturel",
+                                "entertainment.culture.theatre": "🎭 Théâtre",
+                                "entertainment.culture.arts_centre": "🎨 Centre d'art",
+                                "entertainment.culture.gallery": "🖼️ Galerie d'art",
+                                "entertainment.planetarium": "🌌 Planétarium",
+
+                                # Jeux & Détente couverte
+                                "entertainment.escape_game": "🗝️ Escape Game",
+                                "entertainment.bowling_alley": "🎳 Bowling",
+                                "entertainment.amusement_arcade": "🕹️ Salle d'arcade",
+                                "entertainment.aquarium": "🐠 Aquarium",
+                                "leisure.spa": "🧖 Spa & Bien-être",
+                                "leisure.spa.sauna": "🧖 Sauna",
+                                "leisure.spa.public_bath": "🛁 Bains publics",
+
+                                # Plein air & Nature
+                                "leisure.park": "🌳 Parc / Jardin",
+                                "leisure.park.garden": "🌷 Jardin",
+                                "leisure.park.nature_reserve": "🌲 Réserve naturelle",
+                                "leisure.playground": "🛝 Aire de jeux",
+                                "leisure.picnic": "🧺 Espace pique-nique",
+                                "leisure.picnic.picnic_site": "🧺 Aire de pique-nique",
+                                "leisure.picnic.bbq": "🍖 Zone barbecue",
+
+                                # Attractions & Sports
+                                "entertainment.theme_park": "🎡 Parc d'attractions",
+                                "entertainment.water_park": "🌊 Parc aquatique",
+                                "entertainment.zoo": "🦁 Zoo",
+                                "entertainment.miniature_golf": "⛳ Mini-golf",
+                                "entertainment.activity_park": "🧗 Parc d'aventure",
+                                "entertainment.activity_park.climbing": "🧗 Escalade",
+                                "entertainment.activity_park.trampoline": "🤸 Trampoline park",
+                                "entertainment.flying_fox": "🌲 Tyrolienne",
+                            }
+        categorie_lisible = TRADUCTION_CATEGORIES.get(self.category, self.category.replace(".", " ").capitalize())
+        elements.append(f"<span>{categorie_lisible}</span>")
+        if self.address is not None:
+            elements.append(f"📍 {self.address}")
+        if self.phone is not None:
+            elements.append(f"📞 <a href='tel:{self.phone}'>{self.phone}</a>")
+        if self.website is not None:
+            elements.append(f"🌐<a href= '{self.website}' target='_blank'>Visiter le site</a>")
+        horaires_format = self.format_opening_hours()
+        if horaires_format:
+            elements.append(horaires_format)
+        if isinstance(self.facilities, dict):
+            dic_labels = {#Accssibilité
+                          "wheelchair" : "♿ Accessible PMR",
+                          "wheelchair.yes" : "♿ Accessible PMR",
+                          "wheelchair.limited" : "♿ Accessibilité partielle",
+                          # Animaux
+                          "dogs" : "🐶 Chiens bienvenus",
+                          "dogs.yes" : "🐶 Chiens bienvenus",
+                          "dogs.leashed" : "🐕 Chiens en laisse",
+                          "no-dogs" : "🚫 Chiens interdits",
+                          # Connexion
+                          "internet_access" : "📶 Wi-Fi",
+                          "internet_access.free" : "📶 Wi-Fi gratuit",
+                          "internet_access.for_customers" : "📶 Wi-Fi réservé",
+                          # Tarifs
+                          "no_fee.no" : "🎟️ Entrée gratuite",
+                          "no_fee" : "🎟️ Entrée gratuite",
+                          "fee" : "💳 Entrée payante"}
+            for k, v in self.facilities.items():
+                if v is True and k in dic_labels.keys():
+                    elements.append(dic_labels[k])
+        return "<br>".join(elements)

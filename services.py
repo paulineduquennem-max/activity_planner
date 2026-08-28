@@ -134,15 +134,34 @@ class ActivityService:
         
         # Choix dynamique des catégories Geoapify selon la suggestion de la classe Weather
         if environment_type == "Indoor":
-            categories = "entertainment.museum,entertainment.cinema,leisure.spa"
-        else: 
-            categories = "leisure.park,entertainment.theme_park,entertainment.zoo"
+            categories = (
+                "entertainment.museum,"
+                "entertainment.cinema,"
+                "entertainment.culture,"
+                "entertainment.escape_game,"
+                "entertainment.bowling_alley,"
+                "entertainment.amusement_arcade,"
+                "entertainment.planetarium,"
+                "entertainment.aquarium,"
+                "leisure.spa"
+            )
+        else:
+            categories = (
+                "leisure.park,"
+                "leisure.playground,"
+                "leisure.picnic,"
+                "entertainment.theme_park,"
+                "entertainment.water_park,"
+                "entertainment.zoo,"
+                "entertainment.miniature_golf,"
+                "entertainment.activity_park"
+            )
         
         params = {
             "categories" : categories,
-            "filter" : f"circle:{lon},{lat},5000", # recherche dans un rayon de 5km
+            "filter" : f"circle:{lon},{lat},30000", # recherche dans un rayon de 30km
             "bias" : f"proximity:{lon},{lat}", # on priorise les lieux les plus proches
-            "limit" : 20, # on limite à 10 résultats
+            "limit" : 200, # on limite à 200 résultats
             "apiKey": self.api_key,
             "lang": "fr"
         }
@@ -177,8 +196,11 @@ class ActivityService:
                     continue
 
                 categories_brutes = properties.get("categories", [])
-                # Prend la sous-catégorie détaillée si elle existe, sinon le premier élément
-                cat_choisie = next((c for c in categories_brutes if "." in c), "Activité")
+                # On cherche en priorité une sous-catégorie de loisirs/culture
+                cat_choisie = next(
+                    (c for c in categories_brutes if c.startswith("entertainment.") or c.startswith("leisure.")),
+                    next((c for c in categories_brutes if "." in c), "Activité")
+                )
                 
                 objet_activite = Activity(
                     name = name,
