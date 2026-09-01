@@ -26,10 +26,9 @@ class Weather :
         self.city_sunrise = city_sunrise
 
     # Méthode pour déterminer s'il fait nuit et proposer les activités en conséquence 
-    def is_nighttime(self):
-        if self.time > self.city_sunset or self.time < self.city_sunrise:
-            return "Night time"
-        return "Day time"
+    def is_nighttime(self) -> bool:
+        # "n" = night (nuit), "d" = day (jour)
+        return self.part_of_day == "n"
     
     # Méthode pour suggérer des activités intérieur ou extérieur en fonction de la météo
     def suggest_environment(self):
@@ -43,9 +42,9 @@ class Weather :
         print(f"--- DEBUG URBANPULSE : Ville={self.city} | Temp={temp_numerique} | Type={type(temp_numerique)} ---")
 
         mauvais_temps = self.weather in ["Rain", "Snow", "Thunderstorm"]
-        temperature_extreme = temp_numerique >= 30.0 or self.temperature < 15.0
+        temperature_extreme = temp_numerique >= 30.0 or temp_numerique < 15.0
 
-        if mauvais_temps or temperature_extreme:
+        if mauvais_temps or temperature_extreme or self.is_nighttime():
             return "Indoor"
         return "Outdoor"
     
@@ -78,15 +77,15 @@ class Activity :
             "Fr": "Ven", "Sa": "Sam", "Su": "Dim",
             
             # Mois (norme OSM 3 lettres)
-            "Jan": "janv.", "Feb": "févr.", "Mar": "mars", "Apr": "avr.",
-            "May": "mai", "Jun": "juin", "Jul": "juil.", "Aug": "août",
-            "Sep": "sept.", "Oct": "oct.", "Nov": "nov.", "Dec": "déc.",
+            "Jan": "Janv.", "Feb": "Févr.", "Mar": "Mars", "Apr": "Avr.",
+            "May": "Mai", "Jun": "Juin", "Jul": "Juil.", "Aug": "Août",
+            "Sep": "Sept.", "Oct": "Oct.", "Nov": "Nov.", "Dec": "Déc.",
 
             # Mois en anglais complet (au cas où)
-            "January": "janvier", "February": "février", "March": "mars",
-            "April": "avril", "June": "juin", "July": "juillet",
-            "August": "août", "September": "septembre", "October": "octobre",
-            "November": "novembre", "December": "décembre",
+            "January": "Janvier", "February": "Février", "March": "Mars",
+            "April": "Avril", "June": "Juin", "July": "Juillet",
+            "August": "Août", "September": "Septembre", "October": "Octobre",
+            "November": "Novembre", "December": "Décembre",
 
             # Statuts et mentions spéciales
             "off": "Fermé",

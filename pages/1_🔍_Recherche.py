@@ -45,6 +45,44 @@ STYLE_CATEGORIES = {
                     "entertainment.flying_fox": ("darkgreen", "hiking"),
                 }
 
+TRADUCTION_CATEGORY = {# Culture & Spectacle
+                        "entertainment.museum": "🏛️ Musée",
+                        "entertainment.cinema": "🎬 Cinéma",
+                        "entertainment.culture": "🎭 Espace culturel",
+                        "entertainment.culture.theatre": "🎭 Théâtre",
+                        "entertainment.culture.arts_centre": "🎨 Centre d'art",
+                        "entertainment.culture.gallery": "🖼️ Galerie d'art",
+                        "entertainment.planetarium": "🌌 Planétarium",
+
+                        # Jeux & Détente couverte
+                        "entertainment.escape_game": "🗝️ Escape Game",
+                        "entertainment.bowling_alley": "🎳 Bowling",
+                        "entertainment.amusement_arcade": "🕹️ Salle d'arcade",
+                        "entertainment.aquarium": "🐠 Aquarium",
+                        "leisure.spa": "🧖 Spa & Bien-être",
+                        "leisure.spa.sauna": "🧖 Sauna",
+                        "leisure.spa.public_bath": "🛁 Bains publics",
+
+                        # Plein air & Nature
+                        "leisure.park": "🌳 Parc / Jardin",
+                        "leisure.park.garden": "🌷 Jardin",
+                        "leisure.park.nature_reserve": "🌲 Réserve naturelle",
+                        "leisure.playground": "🛝 Aire de jeux",
+                        "leisure.picnic": "🧺 Espace pique-nique",
+                        "leisure.picnic.picnic_site": "🧺 Aire de pique-nique",
+                        "leisure.picnic.bbq": "🍖 Zone barbecue",
+
+                        # Attractions & Sports
+                        "entertainment.theme_park": "🎡 Parc d'attractions",
+                        "entertainment.water_park": "🌊 Parc aquatique",
+                        "entertainment.zoo": "🦁 Zoo",
+                        "entertainment.miniature_golf": "⛳ Mini-golf",
+                        "entertainment.activity_park": "🧗 Parc d'aventure",
+                        "entertainment.activity_park.climbing": "🧗 Escalade",
+                        "entertainment.activity_park.trampoline": "🤸 Trampoline park",
+                        "entertainment.flying_fox": "🌲 Tyrolienne",
+                    }
+
 # --- MENU LATÉRAL PERSONNALISÉ ---
 st.sidebar.markdown("# 🏙️ UrbanPulse")
 st.sidebar.caption("Votre planificateur intelligent")
@@ -171,6 +209,15 @@ with st.container() :
                 if meteo_actuelle:
                         suggestion = meteo_actuelle.suggest_environment()
                         #st.info(f"💡 Indice pour ce créneau : **{suggestion}**") => Vérification du fonctionnement de la récupération des éléments
+                        # Libellé clair pour l'utilisateur
+                        type_sugg = "🌿 Activités en extérieur" if suggestion == "Outdoor" else "🏛️ Activités en intérieur"
+                        st.info(
+                             f"⛅ **Météo à {ville_choisie.strip()} ({creneau_choisi.strip()}) :**"
+                             f" {meteo_actuelle.weather_description.capitalize()} - **{round(meteo_actuelle.temperature,0)}°C**"
+                             f" (pluie : **{meteo_actuelle.prob_of_precipitation}%**)\n\n"
+                             f"👉 **Recommandation :** {type_sugg}"
+                        )
+
                 else:
                         st.warning("Aucune prévision exacte trouvée pour ce créneau précis.")
                         suggestion = "Outdoor" #Sécurité donnée une valeur par défaut à suggestion dans le cas météo actuelle ne renvoie rien
@@ -203,3 +250,23 @@ with st.container() :
                             ).add_to(m)
                         
                         st_folium(m, width= 1000, height= 500, returned_objects=[])
+
+                        st.divider()
+                        st.subheader("Activités recommandées :running_shirt_with_sash: :performing_arts:", divider= "rainbow", text_alignment= "center")
+
+                        cols = st.columns(3)
+
+                        for i, act in enumerate(activity_recomended):
+                            col = cols[i%3]
+                            with st.container(border=True):   
+                                st.write(f"**{act.name.capitalize()}**")
+                                st.caption(f"{TRADUCTION_CATEGORY.get(act.category)}")
+                                if act.address is not None:
+                                    st.write(f"**📍Adresse :** {act.address}")
+                                horaires_format = act.format_opening_hours()
+                                if horaires_format:
+                                    st.markdown(horaires_format, unsafe_allow_html = True)
+                                if act.phone is not None : 
+                                    st.write(f"**📞 Téléphone :** {act.phone}")
+                                if act.website is not None : 
+                                    st.link_button("🌐 Visiter le site", url=act.website, type= "primary")
