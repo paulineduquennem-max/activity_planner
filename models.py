@@ -2,6 +2,8 @@
 import requests
 import pandas as pd
 import streamlit as st
+from opening_hours import OpeningHours
+import datetime as dt
 
 # Création des classes
 
@@ -177,3 +179,15 @@ class Activity :
                 if v is True and k in dic_labels.keys():
                     elements.append(dic_labels[k])
         return "<br>".join(elements)
+
+    def is_open_at(self, target_dt):
+        if self.opening_hours is None:
+            return None
+        else:
+            try:
+                oh= OpeningHours(self.opening_hours)
+                oh_open = oh.is_open(target_dt)
+                return oh_open
+            except Exception:
+                return None
+

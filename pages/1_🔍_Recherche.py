@@ -192,8 +192,8 @@ with st.container() :
                     dic_horaire = {
                                         "Matin ⛅": range(6, 12), 
                                         "Après-midi ☀️" : range(12, 18), 
-                                        "Soir 🌙" : range(18, 22), 
-                                        "Nuit 🌕" : [22, 23, 0, 1, 2, 3, 4, 5]
+                                        "Soir 🌙" : range(18, 23), 
+                                        "Nuit 🌕" : [23, 0, 1, 2, 3, 4, 5]
                                         }
                     heure_cible = dic_horaire[creneau_choisi]
                     date_choisie_str = date_choisie.strftime("%Y-%m-%d") # conversion de l'objet date en str car str dans la classe WeatherService
@@ -223,50 +223,71 @@ with st.container() :
                         suggestion = "Outdoor" #Sécurité donnée une valeur par défaut à suggestion dans le cas météo actuelle ne renvoie rien
                         
                 activity_recomended = activity_service.get_activities(lat, lon, suggestion)
+
                 if not activity_recomended :
                         st.warning("Aucune activité trouvé dans ce rayon pour cette zone.")
                 else: 
-                        m= folium.Map(location=[lat, lon], zoom_start= 15)
-                        
-                        # Marqueur du centre (point de recherche)
-                        folium.Marker(
-                            location=[lat, lon],
-                            popup=f"<b>Centre :</b> {display_name}",
-                            tooltip="Point central",
-                            icon=folium.Icon(color="red", icon="info-sign")
-                        ).add_to(m)
+                    # Filtre sur les horaires
+                     activites_valides = []
+                     est_ouvert = False
+                     for act in activity_recomended:
+                         for h in heure_cible:
+                             jour = date_choisie + dt.timedelta(days=1) if h < 6 and "Nuit" in creneau_choisi else date_choisie
+                             moment_teste = dt.datetime.combine(jour, dt.time(h, 0))
+                             statut = act.is_open_at(moment_teste)
+                             # Si horaire inconnu ou lieu ouvert on le conserve dans une liste
+                             if statut is None or statut is True:
+                                 est_ouvert = True
+                                 activites_valides.append(act)
+                                 break
 
-                        # Marqueurs des activités
-                        for act in activity_recomended:
+                     # Sécurité si le filtrage retire tous les lieux
+                     if not activites_valides:
+                         st.warning("Aucune activité ouverte n'a été trouvée sur ce créneau horaire.")
+
+                     else :
+                         # Carte folium pour les lieux ouvert
+                         m= folium.Map(location=[lat, lon], zoom_start= 15)
+                    
+                         # Marqueur du centre (point de recherche)
+                         folium.Marker(
+                             location=[lat, lon],
+                             popup=f"<b>Centre :</b> {display_name}",
+                             tooltip="Point central",
+                             icon=folium.Icon(color="red", icon="info-sign")
+                         ).add_to(m)
+
+                         # Marqueurs des activités
+                         for act in activites_valides:
                             # Création du marqueur avec le style défini
-                            style = STYLE_CATEGORIES.get(act.category, ("blue", "map-marker"))
-                            couleur, icone = style
+                             style = STYLE_CATEGORIES.get(act.category, ("blue", "map-marker"))
+                             couleur, icone = style
 
-                            folium.Marker(
-                                location=act.coordinates,
-                                popup=folium.Popup(act.to_popup_html(), max_width=300),
-                                tooltip=act.name,
-                                icon=folium.Icon(color=couleur, icon=icone, prefix="fa")
-                            ).add_to(m)
+                             folium.Marker(
+                                 location=act.coordinates,
+                                 popup=folium.Popup(act.to_popup_html(), max_width=300),
+                                 tooltip=act.name,
+                                 icon=folium.Icon(color=couleur, icon=icone, prefix="fa")
+                             ).add_to(m)
                         
-                        st_folium(m, width= 1000, height= 500, returned_objects=[])
+                         st_folium(m, width= 1000, height= 500, returned_objects=[])
 
-                        st.divider()
-                        st.subheader("Activités recommandées :running_shirt_with_sash: :performing_arts:", divider= "rainbow", text_alignment= "center")
+                         st.divider()
+                         st.subheader("Activités recommandées :running_shirt_with_sash: :performing_arts:", divider= "rainbow", text_alignment= "center")
 
-                        cols = st.columns(3)
+                         cols = st.columns(3)
 
-                        for i, act in enumerate(activity_recomended):
-                            col = cols[i%3]
-                            with st.container(border=True):   
-                                st.write(f"**{act.name.capitalize()}**")
-                                st.caption(f"{TRADUCTION_CATEGORY.get(act.category)}")
-                                if act.address is not None:
-                                    st.write(f"**📍Adresse :** {act.address}")
-                                horaires_format = act.format_opening_hours()
-                                if horaires_format:
-                                    st.markdown(horaires_format, unsafe_allow_html = True)
-                                if act.phone is not None : 
-                                    st.write(f"**📞 Téléphone :** {act.phone}")
-                                if act.website is not None : 
-                                    st.link_button("🌐 Visiter le site", url=act.website, type= "primary")
+                         for i, act in enumerate(activites_valides):
+                             col = cols[i%3]
+                             with st.container(border=True):   
+                                 st.write(f"**{act.name.capitalize()}**")
+                                 st.caption(f"{TRADUCTION_CATEGORY.get(act.category)}")
+                                 if act.address is not None:
+                                     st.write(f"**📍Adresse :** {act.address}")
+                                 horaires_format = act.format_opening_hours()
+                                 if horaires_format:
+                                     st.markdown(horaires_format, unsafe_allow_html = True)
+                                 if act.phone is not None : 
+                                     st.write(f"**📞 Téléphone :** {act.phone}")
+                                 if act.website is not None : 
+                                     st.link_button("🌐 Visiter le site", url=act.website, type= "primary")
