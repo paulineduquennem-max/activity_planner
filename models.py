@@ -4,6 +4,7 @@ import pandas as pd
 import streamlit as st
 from opening_hours import OpeningHours
 import datetime as dt
+from zoneinfo import ZoneInfo
 
 # Création des classes
 
@@ -181,13 +182,18 @@ class Activity :
         return "<br>".join(elements)
 
     def is_open_at(self, target_dt):
-        if self.opening_hours is None:
+        if not self.opening_hours:
             return None
-        else:
-            try:
-                oh= OpeningHours(self.opening_hours)
-                oh_open = oh.is_open(target_dt)
-                return oh_open
-            except Exception:
-                return None
+        try:
+            oh = OpeningHours(self.opening_hours)
+            
+            etat = oh.state(target_dt)
+
+            # En fonction du type de retour (enum ou booléen ou string)
+            # Généralement State.Open ou chaine 'open'
+            est_ouvert = (str(etat).lower() in ["state.open", "open", "true"])
+            return est_ouvert
+
+        except Exception:
+            return None
 

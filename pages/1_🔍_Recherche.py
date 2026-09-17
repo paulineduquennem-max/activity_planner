@@ -83,6 +83,15 @@ TRADUCTION_CATEGORY = {# Culture & Spectacle
                         "entertainment.flying_fox": "🌲 Tyrolienne",
                     }
 
+CATEGORIES_FERMEES_LA_NUIT = [
+    "entertainment.museum",
+    "entertainment.culture.gallery",
+    "entertainment.culture.arts_centre",
+    "entertainment.zoo",
+    "entertainment.theme_park",
+    "entertainment.water_park",
+]
+
 # --- MENU LATÉRAL PERSONNALISÉ ---
 st.sidebar.markdown("# 🏙️ UrbanPulse")
 st.sidebar.caption("Votre planificateur intelligent")
@@ -229,17 +238,24 @@ with st.container() :
                 else: 
                     # Filtre sur les horaires
                      activites_valides = []
-                     est_ouvert = False
+                     is_creneau_nuit = "Nuit" in creneau_choisi
+                     
                      for act in activity_recomended:
                          for h in heure_cible:
                              jour = date_choisie + dt.timedelta(days=1) if h < 6 and "Nuit" in creneau_choisi else date_choisie
-                             moment_teste = dt.datetime.combine(jour, dt.time(h, 0))
+                             moment_teste = dt.datetime.combine(jour, dt.time(h, 30))
                              statut = act.is_open_at(moment_teste)
                              # Si horaire inconnu ou lieu ouvert on le conserve dans une liste
-                             if statut is None or statut is True:
-                                 est_ouvert = True
+                             if statut is True:
                                  activites_valides.append(act)
                                  break
+                             elif statut is None:
+                                  # Si pas d'horaires connus : on exclut si c'est la nuit ET que c'est un musée / lieu diurne
+                                  if is_creneau_nuit and act.category in CATEGORIES_FERMEES_LA_NUIT:
+                                       break
+                                  # Sinon (parc, aire de jeux, etc.), on le garde
+                                  activites_valides.append(act)
+                                  break
 
                      # Sécurité si le filtrage retire tous les lieux
                      if not activites_valides:
