@@ -2,6 +2,21 @@ import streamlit as st
 import datetime as dt
 from services import GeocodingService, WeatherService, ActivityService
 from models import Weather, Activity
+import math
+
+# Fonction pour le calcul de distance
+def calculer_distance(lat1, lon1, lat2, lon2):
+    """Calcule la distance orthodromique en km entre deux points GPS."""
+    r = 6371.0  # Rayon moyen de la Terre en km
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+
+    a = (math.sin(delta_phi / 2) ** 2 +
+         math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    return round(r * c, 1)
 
 # --- MENU LATÉRAL PERSONNALISÉ ---
 st.sidebar.markdown("# 🏙️ UrbanPulse")
@@ -71,7 +86,7 @@ with st.form("form_recherche"):
         target_city = st.text_input("**Où**", value= "Paris")
 
     with c2:
-        distance = st.slider("**Rayon ?**", min_value= 5, max_value= 50, step= 5, format= "%d km", on_change= "ignore")
+        distance = st.slider("**Rayon ?**", min_value= 5, max_value= 50, step= 5, format= "%d km")
 
      # Bouton de validation obligatoire dans un st.form
     btn_rechercher = st.form_submit_button("🔍 Trouver des activités", use_container_width=True)
@@ -92,5 +107,24 @@ if st.session_state.recherche_lancee:
             lon = geo_info["lon"]
             display_name = geo_info["display_name"]
 
-            activity_recomended = activity_service.get_activities(lat, lon)
+            activity_recomended = activity_service.get_activities(lat, lon, rayon=distance*1000, environment_type= None) #on transforme la distance en km en mètre
 
+            for act in activity_recomended:
+                act_lat = act.coordinates[0]
+                act_lon = act.coordinates[1]
+                act.distance = calculer_distance(act_lat, act_lon, lat, lon)
+
+            activity_recomended.sort(key= lambda act: act.distance)
+            st.session_state["catalogue_activites"] = activity_recomended
+
+activites = st.session_state.get("catalogue_activites", [])
+
+if activites :
+    col1, col2, col3 = st.columns(3)
+    with col1 :
+        recherche_nom = st.text_input("**Nom ou mot-clé**", placeholder="Ex : Musée, Parc...")
+    with col2 :
+        type_environnement = st.selectbox("**Type d'environnement**", options= ["Intérieur", "Extérieur", "Tous"])
+    with col3:
+        pmr_access = st.toggle("♿ Accessible PMR")
+        dog_ok = st.toggle("🐶 Chiens bienvenus")

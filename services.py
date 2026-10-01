@@ -130,36 +130,32 @@ class ActivityService:
         self.base_url = "https://api.geoapify.com/v2/places"
 
     #@st.cache_data(ttl=86400) # Ajout d'un cache qui s'efface toutes les 24 heures
-    def get_activities(self, lat, lon, environment_type = "Outdoor"):
-        
+    def get_activities(self, lat, lon, rayon = 30000,environment_type = "Outdoor"):
+
+        # Liste des catégories indoor et outdoor pour le catégories Geoapify
+        cat_indoor = ["entertainment.museum","entertainment.cinema", "entertainment.culture", "entertainment.escape_game", 
+                      "entertainment.bowling_alley", "entertainment.amusement_arcade", "entertainment.planetarium",
+                      "entertainment.aquarium","leisure.spa"]
+
+        cat_outdoor = ["leisure.park", "leisure.playground", "leisure.picnic", "entertainment.theme_park", 
+                       "entertainment.water_park", "entertainment.zoo", "entertainment.miniature_golf", 
+                       "entertainment.activity_park"]
+
+        all_cat = cat_indoor + cat_outdoor
+
         # Choix dynamique des catégories Geoapify selon la suggestion de la classe Weather
         if environment_type == "Indoor":
-            categories = (
-                "entertainment.museum,"
-                "entertainment.cinema,"
-                "entertainment.culture,"
-                "entertainment.escape_game,"
-                "entertainment.bowling_alley,"
-                "entertainment.amusement_arcade,"
-                "entertainment.planetarium,"
-                "entertainment.aquarium,"
-                "leisure.spa"
-            )
-        else:
-            categories = (
-                "leisure.park,"
-                "leisure.playground,"
-                "leisure.picnic,"
-                "entertainment.theme_park,"
-                "entertainment.water_park,"
-                "entertainment.zoo,"
-                "entertainment.miniature_golf,"
-                "entertainment.activity_park"
-            )
+            categories_retenues = cat_indoor
+        elif environment_type == "Outdoor":
+            categories_retenues = cat_outdoor
+        else :
+            categories_retenues = all_cat
+
+        categories = ",".join(categories_retenues)
         
         params = {
             "categories" : categories,
-            "filter" : f"circle:{lon},{lat},30000", # recherche dans un rayon de 30km
+            "filter" : f"circle:{lon},{lat},{rayon}", # recherche dans un rayon de 30km
             "bias" : f"proximity:{lon},{lat}", # on priorise les lieux les plus proches
             "limit" : 200, # on limite à 200 résultats
             "apiKey": self.api_key,
