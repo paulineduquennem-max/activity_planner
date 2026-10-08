@@ -106,7 +106,7 @@ st.sidebar.write("---")
 # Appel des services
 geo_service = GeocodingService()
 weather_service = WeatherService()
-activity_service = ActivityService()
+#activity_service = ActivityService()
 
 # Injection CSS pour le style de la page
 
@@ -231,7 +231,7 @@ with st.container() :
                         st.warning("Aucune prévision exacte trouvée pour ce créneau précis.")
                         suggestion = "Outdoor" #Sécurité donnée une valeur par défaut à suggestion dans le cas météo actuelle ne renvoie rien
                         
-                activity_recomended = activity_service.get_activities(lat, lon, suggestion)
+                activity_recomended = ActivityService.get_activities(lat, lon, rayon=30000, environment_type = suggestion)
 
                 if not activity_recomended :
                         st.warning("Aucune activité trouvé dans ce rayon pour cette zone.")

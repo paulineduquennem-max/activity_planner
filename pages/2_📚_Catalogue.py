@@ -4,6 +4,14 @@ from services import GeocodingService, WeatherService, ActivityService
 from models import Weather, Activity
 import math
 
+cat_indoor = ["entertainment.museum","entertainment.cinema", "entertainment.culture", "entertainment.escape_game", 
+                      "entertainment.bowling_alley", "entertainment.amusement_arcade", "entertainment.planetarium",
+                      "entertainment.aquarium","leisure.spa"]
+
+cat_outdoor = ["leisure.park", "leisure.playground", "leisure.picnic", "entertainment.theme_park", 
+                       "entertainment.water_park", "entertainment.zoo", "entertainment.miniature_golf", 
+                       "entertainment.activity_park"]
+
 # Fonction pour le calcul de distance
 def calculer_distance(lat1, lon1, lat2, lon2):
     """Calcule la distance orthodromique en km entre deux points GPS."""
@@ -32,7 +40,7 @@ st.sidebar.write("---")
 # Appel des services
 geo_service = GeocodingService()
 weather_service = WeatherService()
-activity_service = ActivityService()
+#activity_service = ActivityService()
 
 # Injection CSS pour le style de la page
 
@@ -88,6 +96,17 @@ with st.form("form_recherche"):
     with c2:
         distance = st.slider("**Rayon ?**", min_value= 5, max_value= 50, step= 5, format= "%d km")
 
+    st.write("---")
+
+    f1, f2, f3 = st.columns(3)
+    with f1 :
+        recherche_nom = st.text_input("**Nom ou mot-clé**", placeholder="Ex : Musée, Parc...")
+    with f2 :
+        type_environnement = st.selectbox("**Type d'environnement**", options= ["Tous", "Intérieur", "Extérieur"])
+    with f3:
+        pmr_access = st.toggle("♿ Accessible PMR")
+        dog_ok = st.toggle("🐶 Chiens bienvenus")
+
      # Bouton de validation obligatoire dans un st.form
     btn_rechercher = st.form_submit_button("🔍 Trouver des activités", use_container_width=True)
 if btn_rechercher:
@@ -107,7 +126,7 @@ if st.session_state.recherche_lancee:
             lon = geo_info["lon"]
             display_name = geo_info["display_name"]
 
-            activity_recomended = activity_service.get_activities(lat, lon, rayon=distance*1000, environment_type= None) #on transforme la distance en km en mètre
+            activity_recomended = ActivityService.get_activities(lat, lon, rayon=distance*1000, environment_type= type_environnement) #on transforme la distance en km en mètre
 
             for act in activity_recomended:
                 act_lat = act.coordinates[0]
@@ -118,13 +137,45 @@ if st.session_state.recherche_lancee:
             st.session_state["catalogue_activites"] = activity_recomended
 
 activites = st.session_state.get("catalogue_activites", [])
+if activites:
+    st.write("---")
+    st.subheader("Affiner les résultats")
 
-if activites :
-    col1, col2, col3 = st.columns(3)
-    with col1 :
-        recherche_nom = st.text_input("**Nom ou mot-clé**", placeholder="Ex : Musée, Parc...")
-    with col2 :
-        type_environnement = st.selectbox("**Type d'environnement**", options= ["Intérieur", "Extérieur", "Tous"])
-    with col3:
-        pmr_access = st.toggle("♿ Accessible PMR")
-        dog_ok = st.toggle("🐶 Chiens bienvenus")
+    with st.container():
+        activites_filtrees = []
+        for act in activites:
+            if recherche_nom:
+                if recherche_nom.lower() not in act.name.lower():
+                    continue
+               
+            if type_environnement == "Intérieur" and act.category not in cat_indoor:
+                    continue
+            elif type_environnement == "Extérieur" and act.category not in cat_outdoor:
+                    continue
+
+            # On vérifie si facilities est bien un dico, sinon on considère que c'est vide
+            facs = act.facilities if isinstance(act.facilities, dict) else {}
+            if pmr_access == True:
+                has_pmr = facs.get("wheelchair") is True or facs.get("wheelchair.yes") is True or facs.get("wheelchair.limited") is True
+                if not has_pmr:
+                    continue # Si pas PMR alors que le toggle est activé, on zappe
+            if dog_ok == True:
+                 has_dog = facs.get("dogs") is True or facs.get("dogs.yes") is True or facs.get("dogs.leashed") is True
+                 if not has_dog:
+                    continue
+            activites_filtrees.append(act)
+
+        st.write(f"**{len(activites_filtrees)} activité(s) affichée(s)**")
+
+        for i, act in enumerate(activites_filtrees):
+            if i % 3 == 0:
+                cols = st.columns(3)
+            
+            # On choisit la colonne active (0, 1 ou 2) grâce au modulo (%)
+            colonne_actuelle = cols[i % 3]
+            
+            # On dessine la carte dans cette colonne
+            with colonne_actuelle:
+                with st.container(border=True):
+                    st.markdown(act.to_popup_html(), unsafe_allow_html=True)
+

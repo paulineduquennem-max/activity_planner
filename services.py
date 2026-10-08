@@ -126,11 +126,15 @@ class WeatherService :
         
 class ActivityService:
     def __init__(self):
-        self.api_key = os.getenv("PLACESAPI_KEY")
-        self.base_url = "https://api.geoapify.com/v2/places"
+        pass
+        #self.api_key = os.getenv("PLACESAPI_KEY")
+        #self.base_url = "https://api.geoapify.com/v2/places"
 
-    #@st.cache_data(ttl=86400) # Ajout d'un cache qui s'efface toutes les 24 heures
-    def get_activities(self, lat, lon, rayon = 30000,environment_type = "Outdoor"):
+    @st.cache_data(ttl=86400) # Ajout d'un cache qui s'efface toutes les 24 heures
+    @staticmethod
+    def get_activities(lat, lon, rayon = 30000,environment_type = "Outdoor"):
+        api_key = os.getenv("PLACESAPI_KEY")
+        base_url = "https://api.geoapify.com/v2/places"
 
         # Liste des catégories indoor et outdoor pour le catégories Geoapify
         cat_indoor = ["entertainment.museum","entertainment.cinema", "entertainment.culture", "entertainment.escape_game", 
@@ -158,21 +162,26 @@ class ActivityService:
             "filter" : f"circle:{lon},{lat},{rayon}", # recherche dans un rayon de 30km
             "bias" : f"proximity:{lon},{lat}", # on priorise les lieux les plus proches
             "limit" : 200, # on limite à 200 résultats
-            "apiKey": self.api_key,
+            "apiKey": api_key,
             "lang": "fr"
         }
 
         try:
-            response = requests.get(self.base_url, params= params)
+            print("--- DEBUG REQUÊTE ---")
+            print("Params :", params)
+            response = requests.get(base_url, params=params)
+            print("URL complète appelée :", response.url)
+            print("Réponse brute de l'API :", response.text)
             
             if response.status_code != 200:
                 print(f"Erreur Geoapify : {response.status_code}")
                 return []
             
+            
             data = response.json()
             if not data or "features" not in data:
                 return []
-            
+        
             activity_objects = []
 
             for activity in data.get("features", []):
