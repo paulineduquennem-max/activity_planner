@@ -2,7 +2,8 @@
 import requests
 import pandas as pd
 import streamlit as st
-from opening_hours import OpeningHours
+#from opening_hours import OpeningHours
+import osm_opening_hours_humanized as hoh
 import datetime as dt
 from zoneinfo import ZoneInfo
 
@@ -185,13 +186,9 @@ class Activity :
         if not self.opening_hours:
             return None
         try:
-            oh = OpeningHours(self.opening_hours)
+            oh = hoh.OHParser(self.opening_hours)
             
-            etat = oh.state(target_dt)
-
-            # En fonction du type de retour (enum ou booléen ou string)
-            # Généralement State.Open ou chaine 'open'
-            est_ouvert = (str(etat).lower() in ["state.open", "open", "true"])
+            est_ouvert = oh.is_open(target_dt)
             return est_ouvert
 
         except Exception:
