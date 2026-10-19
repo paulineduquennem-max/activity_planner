@@ -2,7 +2,7 @@
 
 **UrbanPulse** est un planificateur urbain intelligent et interactif développé en Python avec **Streamlit**. L'application croise les prévisions météorologiques locales et des données géolocalisées pour recommander et filtrer les meilleures activités (culturelles, de loisirs, en plein air ou en intérieur) autour d'une ville donnée.
 
-🔗 **Application en ligne :** 
+🔗 **Application en ligne :** https://activityplanner-urban-planner.streamlit.app/
 
 ---
 
